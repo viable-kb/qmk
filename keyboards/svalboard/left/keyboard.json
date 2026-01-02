@@ -1,0 +1,6 @@
+{
+    "keyboard_name": "Svalboard Left",
+    "usb": {
+        "pid": "0x4044"
+    }
+}

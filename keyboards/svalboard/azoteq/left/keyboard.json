@@ -1,0 +1,6 @@
+{
+    "keyboard_name": "Svalboard Azoteq Left",
+    "usb": {
+        "pid": "0x404C"
+    }
+}

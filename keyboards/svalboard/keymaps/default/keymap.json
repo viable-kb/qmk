@@ -1,0 +1,13 @@
+{
+    "modules": [
+        "viable-kb/core"
+    ],
+    "config": {
+        "features": {
+            "via": true,
+            "tap_dance": true,
+            "combo": true,
+            "key_override": true
+        }
+    }
+}
