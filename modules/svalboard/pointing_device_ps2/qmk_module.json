@@ -1,0 +1,8 @@
+{
+    "module_name": "PS/2 Pointing Device",
+    "maintainer": "viable-kb",
+    "license": "GPL-2.0-or-later",
+    "features": {
+        "pointing_device": true
+    }
+}
