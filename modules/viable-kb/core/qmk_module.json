@@ -1,0 +1,11 @@
+{
+    "module_name": "Viable",
+    "maintainer": "ilc",
+    "license": "GPL-2.0-or-later",
+    "features": {
+        "via": true,
+        "raw": true,
+        "dynamic_keymap": true,
+        "deferred_exec": true
+    }
+}
