@@ -1,0 +1,38 @@
+name: Release QMK Firmware
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+
+permissions: write-all
+
+jobs:
+  build_viable:
+    uses: ./.github/workflows/build-firmware.yml
+    with:
+      keyboard: ${{ matrix.keyboard }}
+      keymap: ${{ matrix.keymap }}
+      side: ${{ matrix.side }}
+
+    strategy:
+      matrix:
+        keyboard: [ svalboard, svalboard/trackpoint, svalboard/trackball/pmw3360, svalboard/trackball/pmw3389, svalboard/azoteq ]
+        keymap: [ viable ]
+        side: [ left, right ]
+
+  build_blank:
+    uses: ./.github/workflows/build-firmware.yml
+    with:
+      keyboard: ${{ matrix.keyboard }}
+      keymap: ${{ matrix.keymap }}
+      side: ${{ matrix.side }}
+
+    strategy:
+      matrix:
+        keyboard: [ svalboard ]
+        keymap: [ blank ]
+        side: [ left, right ]
