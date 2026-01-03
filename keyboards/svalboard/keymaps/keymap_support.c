@@ -52,7 +52,7 @@ axis_scale_t l_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t r_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t r_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 
-#define MAC_DIVISOR 120
+#define MAC_DIVISOR 12
 bool is_mac = false;
 bool process_detected_host_os_kb(os_variant_t os) {
     if (!process_detected_host_os_user(os)) {
@@ -218,15 +218,21 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
     if (reportMouse1.x == 0 && reportMouse1.y == 0 && reportMouse2.x == 0 && reportMouse2.y == 0)
         return pointing_device_combine_reports(reportMouse1, reportMouse2);
 
-    if ((global_saved_values.left_scroll != scroll_hold) != scroll_toggle) {
+    // Track scroll input BEFORE division (h/v after division may be 0 due to accumulation)
+    bool left_scrolling = (global_saved_values.left_scroll != scroll_hold) != scroll_toggle;
+    bool right_scrolling = (global_saved_values.right_scroll != scroll_hold) != scroll_toggle;
+    bool has_scroll_input = (left_scrolling && (reportMouse1.x != 0 || reportMouse1.y != 0)) ||
+                            (right_scrolling && (reportMouse2.x != 0 || reportMouse2.y != 0));
+
+    if (left_scrolling) {
         reportMouse1.h = add_to_axis(&l_x, reportMouse1.x);
         reportMouse1.v = add_to_axis(&l_y, -reportMouse1.y);
 
-	
+
         reportMouse1.x = 0;
         reportMouse1.y = 0;
     }
-    if ((global_saved_values.right_scroll != scroll_hold) != scroll_toggle) {
+    if (right_scrolling) {
         reportMouse2.h = add_to_axis(&r_x, reportMouse2.x);
         reportMouse2.v = add_to_axis(&r_y, -reportMouse2.y);
 
@@ -234,7 +240,7 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
         reportMouse2.y = 0;
     }
 
-    if ((reportMouse1.h != 0 || reportMouse1.v != 0 || reportMouse2.h != 0 || reportMouse2.v != 0) && !scroll_timer_running) {
+    if (has_scroll_input && !scroll_timer_running) {
         scroll_timer_running = true;
         scroll_timer = timer_read();
     }
