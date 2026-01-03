@@ -41,6 +41,10 @@ VIABLE_JSON_PATH := $(firstword \
     $(wildcard $(MAIN_KEYMAP_PATH_4)/viable.json) \
     $(wildcard $(MAIN_KEYMAP_PATH_5)/viable.json))
 
+ifeq ($(VIABLE_JSON_PATH),)
+    $(error Viable module requires viable.json in your keymap directory)
+endif
+
 VIABLE_DEFINITION_HEADER := $(INTERMEDIATE_OUTPUT)/src/viable_definition_data.h
 
 # Generate the header at the start of the build
