@@ -226,7 +226,7 @@ uint32_t viable_get_definition_size(void);
 uint8_t viable_get_definition_chunk(uint16_t offset, uint8_t *buffer);
 
 // Weak keyboard hook for post-init
-void keyboard_post_init_viable_kb(void);
+void keyboard_post_init_core_kb(void);
 
 // Tap dance process_record hook
 bool process_record_viable_tap_dance(uint16_t keycode, keyrecord_t *record);

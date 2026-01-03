@@ -4,6 +4,7 @@
 #include "viable.h"
 #include "quantum.h"
 #include "via.h"
+#include "dynamic_keymap.h"
 #include "raw_hid.h"
 #include "eeprom.h"
 #include <string.h>
@@ -72,11 +73,11 @@ void viable_init(void) {
 }
 
 // Weak keyboard post-init hook
-__attribute__((weak)) void keyboard_post_init_viable_kb(void) {}
+__attribute__((weak)) void keyboard_post_init_core_kb(void) {}
 
-// Module hook for post-init
-void keyboard_post_init_viable(void) {
-    keyboard_post_init_viable_kb();
+// Module hook for post-init (named after directory: viable-kb/core)
+void keyboard_post_init_core(void) {
+    keyboard_post_init_core_kb();
     viable_init();
 }
 
@@ -186,6 +187,9 @@ void viable_reset(void) {
         }
         viable_write_eeprom(i, zero, chunk);
     }
+    // Reset VIA dynamic keymap and macros
+    dynamic_keymap_reset();
+    dynamic_keymap_macro_reset();
     viable_reload_tap_dance();
     viable_reload_combo();
     viable_reload_key_override();
