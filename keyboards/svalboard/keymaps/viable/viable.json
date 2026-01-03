@@ -1,0 +1,371 @@
+{
+    "name": "Svalboard",
+    "vendorId": "0x303A",
+    "productId": "0x4044",
+    "matrix": {
+        "rows": 10,
+        "cols": 6
+    },
+    "customKeycodes": [
+        {
+            "name": "SV_LEFT_DPI_INC",
+            "title": "Increase the DPI of the left pointing device.",
+            "shortName": "Left\nDPI +"
+        },
+        {
+            "name": "SV_LEFT_DPI_DEC",
+            "title": "Decrease the DPI of the left pointing device.",
+            "shortName": "Left\nDPI -"
+        },
+        {
+            "name": "SV_RIGHT_DPI_INC",
+            "title": "Increase the DPI of the right pointing device.",
+            "shortName": "Right\nDPI +"
+        },
+        {
+            "name": "SV_RIGHT_DPI_DEC",
+            "title": "Decrease the DPI of the right pointing device.",
+            "shortName": "Right\nDPI -"
+        },
+        {
+            "name": "SV_LEFT_SCROLL_TOGGLE",
+            "title": "Toggle if the left pointer is scroll or pointer.",
+            "shortName": "Scroll\nLeft\nToggle"
+        },
+        {
+            "name": "SV_RIGHT_SCROLL_TOGGLE",
+            "title": "Toggle if the right pointer is scroll or pointer.",
+            "shortName": "Scroll\nRight\nToggle"
+        },
+        {
+            "name": "SV_RECALIBRATE_POINTER",
+            "title": "Reset the calibration of the pointing device.",
+            "shortName": "Fix\nDrift"
+        },
+        {
+            "name": "SV_MH_CHANGE_TIMEOUTS",
+            "title": "Cycle between various settings of the mouse keys timer.",
+            "shortName": "Mouse\nKey\nTimer"
+        },
+        {
+            "name": "SV_CAPS_WORD",
+            "title": "Toggle Caps Word.",
+            "shortName": "Caps\nWord"
+        },
+        {
+            "name": "SV_AXIS_SCROLL_LOCK",
+            "title": "Toggle Axis Scroll Lock.",
+            "shortName": "Axis\nScroll\nLock"
+        },
+        {
+            "name": "SV_TOGGLE_23_67",
+            "title": "Toggle layer 2 and 3, if 4 and 5 also active toggle 6 and 7.",
+            "shortName": "MO 23\n(45=67)"
+        },
+        {
+            "name": "SV_TOGGLE_45_67",
+            "title": "Toggle layer 4 and 5, if 2 and 3 also active toggle 6 and 7.",
+            "shortName": "MO 45\n(23=67)"
+        },
+        {
+            "name": "SV_SNIPER_2",
+            "title": "Slow the cursor 2x more.",
+            "shortName": "Sniper\n2x"
+        },
+        {
+            "name": "SV_SNIPER_3",
+            "title": "Slow the cursor 3x more.",
+            "shortName": "Sniper\n3x"
+        },
+        {
+            "name": "SV_SNIPER_5",
+            "title": "Slow the cursor 5x more.",
+            "shortName": "Sniper\n5x"
+        },
+        {
+            "name": "SV_SCROLL_HOLD",
+            "title": "Hold to toggle the scrolling mode of both pointers.",
+            "shortName": "Scroll\nToggle\nHold"
+        },
+        {
+            "name": "SV_SCROLL_TOGGLE",
+            "title": "Press to toggle the scrolling mode of both pointers.",
+            "shortName": "Scroll\nToggle"
+        },
+        {
+            "name": "SV_OUTPUT_STATUS",
+            "title": "Output the current internal state of the keyboard.",
+            "shortName": "Output\nStatus"
+        },
+        {
+            "name": "SV_TOGGLE_AUTOMOUSE",
+            "title": "Toggle Auto Mouse layer activation.",
+            "shortName": "AutoMouse\nToggle"
+        },
+        {
+            "name": "SV_TURBO_SCAN",
+            "title": "Change the scan mode of the keyboard.",
+            "shortName": "Turbo\nScan"
+        },
+        {
+            "name": "SV_NATURAL_SCROLL_TOGGLE",
+            "title": "Toggle natural scroll (inverts vertical scroll direction).",
+            "shortName": "Natural\nScroll"
+        }
+    ],
+    "menus": [
+        {
+            "label": "Pointing Device",
+            "content": [
+                {
+                    "label": "Left Pointer",
+                    "content": [
+                        {
+                            "label": "DPI",
+                            "type": "dropdown",
+                            "options": ["200", "400", "600", "800", "1200", "1600", "2400", "3200", "4800", "6400", "12000"],
+                            "content": ["id_left_dpi", 0, 0]
+                        },
+                        {
+                            "label": "Scroll Mode",
+                            "type": "toggle",
+                            "content": ["id_left_scroll", 0, 1]
+                        }
+                    ]
+                },
+                {
+                    "label": "Right Pointer",
+                    "content": [
+                        {
+                            "label": "DPI",
+                            "type": "dropdown",
+                            "options": ["200", "400", "600", "800", "1200", "1600", "2400", "3200", "4800", "6400", "12000"],
+                            "content": ["id_right_dpi", 0, 2]
+                        },
+                        {
+                            "label": "Scroll Mode",
+                            "type": "toggle",
+                            "content": ["id_right_scroll", 0, 3]
+                        }
+                    ]
+                },
+                {
+                    "label": "Auto Mouse",
+                    "content": [
+                        {
+                            "label": "Enable Auto Mouse",
+                            "type": "toggle",
+                            "content": ["id_automouse_enable", 0, 4]
+                        },
+                        {
+                            "showIf": "{id_automouse_enable} == 1",
+                            "content": [
+                                {
+                                    "label": "Timeout",
+                                    "type": "dropdown",
+                                    "options": ["200 ms", "300 ms", "400 ms", "500 ms", "800 ms", "Infinite"],
+                                    "content": ["id_automouse_timeout", 0, 5]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "label": "Scroll Settings",
+                    "content": [
+                        {
+                            "label": "Natural Scroll",
+                            "type": "toggle",
+                            "content": ["id_natural_scroll", 0, 7]
+                        },
+                        {
+                            "label": "Axis Lock",
+                            "type": "toggle",
+                            "content": ["id_axis_lock", 0, 8]
+                        }
+                    ]
+                },
+                {
+                    "label": "Advanced",
+                    "content": [
+                        {
+                            "label": "Scan Speed",
+                            "type": "dropdown",
+                            "options": ["0", "1", "2", "3", "4", "5", "6"],
+                            "content": ["id_turbo_scan", 0, 9]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "Layer Colors",
+            "content": [
+                {"label": "Layer 0", "type": "color", "content": ["id_layer0_color", 0, 32]},
+                {"label": "Layer 1", "type": "color", "content": ["id_layer1_color", 0, 33]},
+                {"label": "Layer 2", "type": "color", "content": ["id_layer2_color", 0, 34]},
+                {"label": "Layer 3", "type": "color", "content": ["id_layer3_color", 0, 35]},
+                {"label": "Layer 4", "type": "color", "content": ["id_layer4_color", 0, 36]},
+                {"label": "Layer 5", "type": "color", "content": ["id_layer5_color", 0, 37]},
+                {"label": "Layer 6", "type": "color", "content": ["id_layer6_color", 0, 38]},
+                {"label": "Layer 7", "type": "color", "content": ["id_layer7_color", 0, 39]},
+                {"label": "Layer 8", "type": "color", "content": ["id_layer8_color", 0, 40]},
+                {"label": "Layer 9", "type": "color", "content": ["id_layer9_color", 0, 41]},
+                {"label": "Layer 10", "type": "color", "content": ["id_layer10_color", 0, 42]},
+                {"label": "Layer 11", "type": "color", "content": ["id_layer11_color", 0, 43]},
+                {"label": "Layer 12", "type": "color", "content": ["id_layer12_color", 0, 44]},
+                {"label": "Layer 13", "type": "color", "content": ["id_layer13_color", 0, 45]},
+                {"label": "Layer 14", "type": "color", "content": ["id_layer14_color", 0, 46]},
+                {"label": "Layer 15", "type": "color", "content": ["id_layer15_color", 0, 47]}
+            ]
+        }
+    ],
+    "layouts": {
+        "labels": [
+            "Normal",
+            ["2S", "No 2S", "2S"]
+        ],
+        "keymap": [
+            [
+                {"x": 3.5},
+                "3,3",
+                {"x": 2.5},
+                "2,3",
+                {"x": 9},
+                "7,3",
+                {"x": 2.5},
+                "8,3"
+            ],
+            [
+                {"x": 2.5},
+                "3,4",
+                "3,2",
+                "3,1",
+                {"x": 0.5},
+                "2,4",
+                "2,2",
+                "2,1",
+                {"x": 7},
+                "7,4",
+                "7,2",
+                "7,1",
+                {"x": 0.5},
+                "8,4",
+                "8,2",
+                "8,1"
+            ],
+            [
+                {"y": -0.5, "x": 1},
+                "4,3",
+                {"x": 7.5},
+                "1,3",
+                {"x": 4},
+                "6,3",
+                {"x": 7.5},
+                "9,3"
+            ],
+            [
+                {"y": -0.5, "x": 3.5},
+                "3,0",
+                {"x": 2.5},
+                "2,0",
+                {"x": 9},
+                "7,0",
+                {"x": 2.5},
+                "8,0"
+            ],
+            [
+                {"y": -0.5},
+                "4,4",
+                "4,2",
+                "4,1",
+                {"x": 5.5},
+                "1,4",
+                "1,2",
+                "1,1",
+                {"x": 2},
+                "6,4",
+                "6,2",
+                "6,1",
+                {"x": 5.5},
+                "9,4",
+                "9,2",
+                "9,1"
+            ],
+            [
+                {"y": -0.5, "x": 3.5},
+                "3,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0",
+                {"x": 2.5},
+                "2,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0",
+                {"x": 9},
+                "7,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0",
+                {"x": 2.5},
+                "8,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0"
+            ],
+            [
+                {"y": -0.5, "x": 1},
+                "4,0",
+                {"x": 7.5},
+                "1,0",
+                {"x": 4},
+                "6,0",
+                {"x": 7.5},
+                "9,0"
+            ],
+            [
+                {"x": 1},
+                "4,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0",
+                {"x": 7.5},
+                "1,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0",
+                {"x": 4},
+                "6,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0",
+                {"x": 7.5},
+                "9,5\n\n\n1,1",
+                {"x": -1, "d": true},
+                "\n\n\n1,0"
+            ],
+            [
+                {"y": 0.5, "x": 7.9, "w": 1.5},
+                "0,3",
+                {"x": 0.09999999999999964},
+                "0,5",
+                {"x": 0.09999999999999964, "w": 1.5},
+                "0,1",
+                {"x": 0.8000000000000007, "w": 1.5},
+                "5,1",
+                {"x": 0.09999999999999964},
+                "5,5",
+                {"x": 0.09999999999999964, "w": 1.5},
+                "5,3"
+            ],
+            [
+                {"x": 7.4, "w": 2},
+                "0,4",
+                {"x": 0.09999999999999964},
+                "0,2",
+                {"x": 0.09999999999999964, "w": 1.5},
+                "0,0",
+                {"x": 0.8000000000000007, "w": 1.5},
+                "5,0",
+                {"x": 0.09999999999999964},
+                "5,2",
+                {"x": 0.09999999999999964, "w": 2},
+                "5,4"
+            ]
+        ]
+    }
+}
