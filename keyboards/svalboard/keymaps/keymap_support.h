@@ -21,8 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include "svalboard.h"
 
+// VIA's customKeycodes maps to QK_USER range (0x7E40+), not QK_KB (0x7E00+).
+// TODO: Investigate using QK_KB range for keyboard-level keycodes in the future.
 enum my_keycodes {
-    SV_LEFT_DPI_INC = QK_KB_0,
+    SV_LEFT_DPI_INC = QK_USER_0,
     SV_LEFT_DPI_DEC,
     SV_RIGHT_DPI_INC,
     SV_RIGHT_DPI_DEC,
