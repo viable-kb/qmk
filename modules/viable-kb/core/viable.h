@@ -223,7 +223,7 @@ void viable_keycode_tap(uint16_t keycode);
 
 // Keyboard definition functions
 uint32_t viable_get_definition_size(void);
-uint8_t viable_get_definition_chunk(uint16_t offset, uint8_t *buffer);
+uint8_t viable_get_definition_chunk(uint16_t offset, uint8_t *buffer, uint8_t max_size);
 
 // Weak keyboard hook for post-init
 void keyboard_post_init_core_kb(void);

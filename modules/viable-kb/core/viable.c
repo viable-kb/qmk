@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "viable.h"
+#include "client_wrapper.h"
 #include "quantum.h"
 #include "via.h"
 #include "dynamic_keymap.h"
@@ -56,6 +57,9 @@ static void viable_eeprom_set_valid(void) {
 }
 
 void viable_init(void) {
+    // Initialize client wrapper for multi-client support
+    client_wrapper_init();
+
     // Check if EEPROM data is valid (matches current firmware version)
     if (!viable_eeprom_is_valid()) {
         // Reset all viable data to defaults
@@ -390,10 +394,18 @@ bool viable_handle_command(uint8_t *data, uint8_t length) {
         }
 
         case viable_cmd_definition_chunk: {
-            // Request: [0xDF] [0x0E] [offset_lo] [offset_hi]
-            // Response: [0xDF] [0x0E] [offset_lo] [offset_hi] [28 bytes data]
+            // Request: [0xDF] [0x0E] [offset_lo] [offset_hi] [size]
+            // Response: [0xDF] [0x0E] [offset_lo] [offset_hi] [actual_size] [data...]
             uint16_t offset = data[2] | (data[3] << 8);
-            viable_get_definition_chunk(offset, &data[4]);
+            uint8_t requested_size = data[4];
+
+            // Clamp to maximum chunk size
+            if (requested_size == 0 || requested_size > VIABLE_DEFINITION_CHUNK_SIZE) {
+                requested_size = VIABLE_DEFINITION_CHUNK_SIZE;
+            }
+
+            uint8_t actual_size = viable_get_definition_chunk(offset, &data[5], requested_size);
+            data[4] = actual_size;
             break;
         }
 
@@ -437,15 +449,18 @@ bool viable_handle_command(uint8_t *data, uint8_t length) {
     return true;
 }
 
-// Override via_command_kb to intercept Viable protocol commands
+// Override via_command_kb to intercept wrapper and Viable protocol
 bool via_command_kb(uint8_t *data, uint8_t length) {
-    // Check for Viable prefix (0xDF)
-    if (data[0] == VIABLE_PREFIX) {
-        viable_handle_command(data, length);
-        raw_hid_send(data, length);
-        return true;  // Command was handled
+    switch (data[0]) {
+        case WRAPPER_PREFIX:  // 0xDD - Client ID wrapper
+            return client_wrapper_receive(data, length);
+
+        case VIABLE_PREFIX:  // 0xDF - Legacy Viable - REJECTED (wrapper required)
+            return true;  // "Handled" by ignoring
+
+        default:
+            return false;  // Let VIA handle
     }
-    return false;  // Let VIA handle other commands
 }
 
 // Process record hook for Viable features

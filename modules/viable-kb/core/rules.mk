@@ -31,6 +31,7 @@ SRC += $(VIABLE_MODULE_PATH)viable_key_override.c
 SRC += $(VIABLE_MODULE_PATH)viable_alt_repeat_key.c
 SRC += $(VIABLE_MODULE_PATH)viable_definition.c
 SRC += $(VIABLE_MODULE_PATH)viable_qmk_settings.c
+SRC += $(VIABLE_MODULE_PATH)client_wrapper.c
 
 # Generate compressed keyboard definition header
 # Search for viable.json in keymap directories (same search order as QMK)

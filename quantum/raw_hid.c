@@ -4,7 +4,7 @@
 #include "raw_hid.h"
 #include "host.h"
 
-void raw_hid_send(uint8_t *data, uint8_t length) {
+__attribute__((weak)) void raw_hid_send(uint8_t *data, uint8_t length) {
     host_raw_hid_send(data, length);
 }
 

@@ -11,14 +11,14 @@ uint32_t viable_get_definition_size(void) {
 }
 
 // Get a chunk of the compressed keyboard definition
-// Returns the number of bytes copied (up to 28)
-uint8_t viable_get_definition_chunk(uint16_t offset, uint8_t *buffer) {
+// Returns the number of bytes copied (up to max_size)
+uint8_t viable_get_definition_chunk(uint16_t offset, uint8_t *buffer, uint8_t max_size) {
     if (offset >= VIABLE_DEFINITION_SIZE) {
         return 0;
     }
 
     uint16_t remaining = VIABLE_DEFINITION_SIZE - offset;
-    uint8_t chunk_size = remaining < VIABLE_DEFINITION_CHUNK_SIZE ? remaining : VIABLE_DEFINITION_CHUNK_SIZE;
+    uint8_t chunk_size = remaining < max_size ? remaining : max_size;
 
     // Copy from PROGMEM
     memcpy_P(buffer, &viable_definition_data[offset], chunk_size);
