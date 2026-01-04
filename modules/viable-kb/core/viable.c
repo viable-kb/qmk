@@ -11,6 +11,8 @@
 #include <string.h>
 #include "print.h"
 #include "version.h"
+#include "send_string.h"
+#include "wait.h"
 
 ASSERT_COMMUNITY_MODULES_MIN_API_VERSION(1, 0, 0);
 
@@ -516,4 +518,96 @@ uint16_t keymap_key_to_keycode(uint8_t layer, keypos_t key) {
     }
     // Use dynamic keymap for normal keys
     return dynamic_keymap_get_keycode(layer, key.row, key.col);
+}
+
+// Vial macro extension codes for 16-bit keycodes
+#define VIAL_MACRO_EXT_TAP 5
+#define VIAL_MACRO_EXT_DOWN 6
+#define VIAL_MACRO_EXT_UP 7
+
+static uint16_t decode_keycode(uint16_t kc) {
+    // Map 0xFF01 => 0x0100; 0xFF02 => 0x0200, etc.
+    if (kc > 0xFF00)
+        return (kc & 0xFF) << 8;
+    return kc;
+}
+
+// Override dynamic_keymap_macro_send to support extended keycodes and binary delay
+void dynamic_keymap_macro_send(uint8_t id) {
+    if (id >= dynamic_keymap_macro_get_count()) {
+        return;
+    }
+
+    // Check the last byte of the buffer for validity
+    uint16_t macro_size = dynamic_keymap_macro_get_buffer_size();
+    uint8_t last_byte;
+    dynamic_keymap_macro_get_buffer(macro_size - 1, 1, &last_byte);
+    if (last_byte != 0) {
+        return;
+    }
+
+    // Find the start of macro N by counting null terminators
+    uint32_t offset = 0;
+    while (id > 0) {
+        if (offset >= macro_size) {
+            return;
+        }
+        uint8_t byte;
+        dynamic_keymap_macro_get_buffer(offset, 1, &byte);
+        if (byte == 0) {
+            --id;
+        }
+        ++offset;
+    }
+
+    // Process macro bytes
+    char data[4] = {0, 0, 0, 0};
+    while (1) {
+        memset(data, 0, sizeof(data));
+        dynamic_keymap_macro_get_buffer(offset++, 1, (uint8_t*)&data[0]);
+        if (data[0] == 0) {
+            break;
+        }
+        if (data[0] == SS_QMK_PREFIX) {
+            dynamic_keymap_macro_get_buffer(offset++, 1, (uint8_t*)&data[1]);
+            if (data[1] == 0)
+                break;
+            if (data[1] == SS_TAP_CODE || data[1] == SS_DOWN_CODE || data[1] == SS_UP_CODE) {
+                dynamic_keymap_macro_get_buffer(offset++, 1, (uint8_t*)&data[2]);
+                if (data[2] != 0)
+                    send_string(data);
+            } else if (data[1] == VIAL_MACRO_EXT_TAP || data[1] == VIAL_MACRO_EXT_DOWN || data[1] == VIAL_MACRO_EXT_UP) {
+                dynamic_keymap_macro_get_buffer(offset++, 1, (uint8_t*)&data[2]);
+                if (data[2] != 0) {
+                    dynamic_keymap_macro_get_buffer(offset++, 1, (uint8_t*)&data[3]);
+                    if (data[3] != 0) {
+                        uint16_t kc;
+                        memcpy(&kc, &data[2], sizeof(kc));
+                        kc = decode_keycode(kc);
+                        switch (data[1]) {
+                        case VIAL_MACRO_EXT_TAP:
+                            viable_keycode_tap(kc);
+                            break;
+                        case VIAL_MACRO_EXT_DOWN:
+                            viable_keycode_down(kc);
+                            break;
+                        case VIAL_MACRO_EXT_UP:
+                            viable_keycode_up(kc);
+                            break;
+                        }
+                    }
+                }
+            } else if (data[1] == SS_DELAY_CODE) {
+                uint8_t d0, d1;
+                dynamic_keymap_macro_get_buffer(offset++, 1, &d0);
+                dynamic_keymap_macro_get_buffer(offset++, 1, &d1);
+                if (d0 == 0 || d1 == 0)
+                    break;
+                int ms = (d0 - 1) + (d1 - 1) * 255;
+                wait_ms(ms);
+            }
+        } else {
+            send_string_with_delay(data, TAP_CODE_DELAY);
+        }
+    }
 }

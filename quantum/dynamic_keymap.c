@@ -137,7 +137,7 @@ void dynamic_keymap_macro_reset(void) {
     nvm_dynamic_keymap_macro_reset();
 }
 
-void dynamic_keymap_macro_send(uint8_t id) {
+__attribute__((weak)) void dynamic_keymap_macro_send(uint8_t id) {
     if (id >= DYNAMIC_KEYMAP_MACRO_COUNT) {
         return;
     }
