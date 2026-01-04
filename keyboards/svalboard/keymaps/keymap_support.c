@@ -47,6 +47,10 @@ void mouse_mode(bool);
 #define SCROLL_MULTIPLIER 1
 bool mouse_mode_enabled = false;
 
+// Automouse threshold accumulator (normalized to 800 DPI)
+static int32_t automouse_accumulator = 0;
+static uint16_t automouse_accumulator_timer = 0;
+
 axis_scale_t l_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t l_y = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
 axis_scale_t r_x = {1, SCROLL_DIVISOR, SCROLL_MULTIPLIER};
@@ -279,7 +283,30 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
 	m_scroll_accumulator_v = 0;
     }
 
-    mouse_mode(true);
+    // Accumulate movement for threshold check (normalized to 800 DPI reference)
+    int32_t left_movement = abs(reportMouse1.x) + abs(reportMouse1.y);
+    int32_t right_movement = abs(reportMouse2.x) + abs(reportMouse2.y);
+    int32_t normalized_movement = 0;
+    if (left_movement > 0) {
+        normalized_movement += (left_movement * 800) / get_left_dpi();
+    }
+    if (right_movement > 0) {
+        normalized_movement += (right_movement * 800) / get_right_dpi();
+    }
+    if (normalized_movement > 0) {
+        uint16_t decay_ms = global_saved_values.automouse_decay * 10;
+        if (decay_ms > 0 && timer_elapsed(automouse_accumulator_timer) > decay_ms) {
+            automouse_accumulator = 0;
+        }
+        automouse_accumulator_timer = timer_read();
+        automouse_accumulator += normalized_movement;
+
+        if (global_saved_values.automouse_threshold == 0 ||
+            automouse_accumulator >= global_saved_values.automouse_threshold) {
+            mouse_mode(true);
+        }
+    }
+
     ret_mouse = pointing_device_combine_reports(reportMouse1, reportMouse2);
 
     if (global_saved_values.natural_scroll) {
@@ -295,11 +322,7 @@ void toggle_axis_scroll_lock(void) {
 }
 
 report_mouse_t pointing_device_task_user(report_mouse_t reportMouse) {
-   if (reportMouse.x == 0 && reportMouse.y == 0 && reportMouse.h == 0 && reportMouse.v == 0)
-        return reportMouse;
-
-    mouse_mode(true);
-
+    // Threshold check is done in pointing_device_task_combined_user
     return reportMouse;
 }
 #endif
@@ -551,6 +574,9 @@ void mouse_mode(bool on) {
             mh_auto_buttons_timer = 0;
             mouse_mode_enabled = false;
             mouse_keys_pressed = 0;
+#if defined(POINTING_DEVICE_AUTO_MOUSE_MH_ENABLE)
+            automouse_accumulator = 0;
+#endif
         }
     }
 }

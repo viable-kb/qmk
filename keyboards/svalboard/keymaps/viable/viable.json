@@ -161,10 +161,22 @@
                             "showIf": "{id_automouse_enable} == 1",
                             "content": [
                                 {
-                                    "label": "Timeout",
+                                    "label": "Layer Timeout",
                                     "type": "dropdown",
                                     "options": ["200 ms", "300 ms", "400 ms", "500 ms", "800 ms", "Infinite"],
                                     "content": ["id_automouse_timeout", 0, 5]
+                                },
+                                {
+                                    "label": "Activation Threshold",
+                                    "type": "range",
+                                    "options": [0, 1000],
+                                    "content": ["id_automouse_threshold", 0, 6]
+                                },
+                                {
+                                    "label": "Activation Decay (x10ms)",
+                                    "type": "range",
+                                    "options": [0, 255],
+                                    "content": ["id_automouse_decay", 0, 10]
                                 }
                             ]
                         }

@@ -27,7 +27,6 @@ struct layer_hsv {
 };
 
 struct __attribute__((__packed__)) saved_values {
-    uint8_t version;  // Currently at 7. We assume all new data will be zeroed.
     bool left_scroll :1;
     bool right_scroll :1;
     bool axis_scroll_lock: 1;
@@ -39,6 +38,8 @@ struct __attribute__((__packed__)) saved_values {
     uint8_t mh_timer_index;
     struct layer_hsv layer_colors[DYNAMIC_KEYMAP_LAYER_COUNT];
     uint8_t turbo_scan;
+    uint16_t automouse_threshold; // Movement distance required for layer activation (0=disabled)
+    uint8_t automouse_decay;      // Accumulator decay time in 10ms units (0=no decay)
 };
 
 // RPC structure for split keyboard sync

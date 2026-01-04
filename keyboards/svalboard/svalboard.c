@@ -48,74 +48,47 @@ void write_eeprom_kb(void) {
     via_update_custom_config(&global_saved_values, SVALBOARD_VIA_CONFIG_OFFSET, SVALBOARD_VIA_CONFIG_SIZE);
 }
 
-void read_eeprom_kb(void) {
-    bool modified = false;
+#define HSV(c) (struct layer_hsv) { (c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF}
 
+void read_eeprom_kb(void) {
     // Check if EEPROM data is valid (matches current firmware version)
     if (!svalboard_eeprom_is_valid()) {
-        // Fresh EEPROM - zero out and start from version 0
+        // Fresh EEPROM - apply defaults
         memset(&global_saved_values, 0, sizeof(global_saved_values));
-        modified = true;
-    } else {
-        via_read_custom_config(&global_saved_values, SVALBOARD_VIA_CONFIG_OFFSET, SVALBOARD_VIA_CONFIG_SIZE);
-    }
-    if (global_saved_values.version < 1) {
-        global_saved_values.version = 1;
-        global_saved_values.right_dpi_index=3;
-        global_saved_values.left_dpi_index=3;
-        modified = true;
-    }
-    if (global_saved_values.version < 2) {
-        global_saved_values.version = 2;
+
+        global_saved_values.right_dpi_index = 3;
+        global_saved_values.left_dpi_index = 3;
         global_saved_values.mh_timer_index = 3;
-	global_saved_values.left_scroll = true;
-        modified = true;
-    }
-    if (global_saved_values.version < 3) {
-        global_saved_values.version = 3;
-#define HSV(c) (struct layer_hsv) { (c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF}
-        // Colors from chatgpt.
-        global_saved_values.layer_colors[0] = HSV(0x55FFFF); // Green
-        global_saved_values.layer_colors[1] = HSV(0x15FFFF); // Orange
-        global_saved_values.layer_colors[2] = HSV(0x95FFFF); // Azure
-        global_saved_values.layer_colors[3] = HSV(0x0BB0FF); // Coral
-        global_saved_values.layer_colors[4] = HSV(0x2BFFFF); // Yellow
-        global_saved_values.layer_colors[5] = HSV(0x80FF80); // Teal
-        global_saved_values.layer_colors[6] = HSV(0x00FFFF); // Red
-        global_saved_values.layer_colors[7] = HSV(0x00FFFF); // Red
-        global_saved_values.layer_colors[8] = HSV(0xEAFFFF); // Pink
-        global_saved_values.layer_colors[9] = HSV(0xBFFF80); // Purple
+        global_saved_values.left_scroll = true;
+        global_saved_values.auto_mouse = true;
+        global_saved_values.axis_scroll_lock = true;
+        global_saved_values.turbo_scan = 0;
+        global_saved_values.natural_scroll = false;
+        global_saved_values.automouse_threshold = 50;
+        global_saved_values.automouse_decay = 7;  // 70ms
+
+        // Layer colors
+        global_saved_values.layer_colors[0] = HSV(0x55FFFF);  // Green
+        global_saved_values.layer_colors[1] = HSV(0x15FFFF);  // Orange
+        global_saved_values.layer_colors[2] = HSV(0x95FFFF);  // Azure
+        global_saved_values.layer_colors[3] = HSV(0x0BB0FF);  // Coral
+        global_saved_values.layer_colors[4] = HSV(0x2BFFFF);  // Yellow
+        global_saved_values.layer_colors[5] = HSV(0x80FF80);  // Teal
+        global_saved_values.layer_colors[6] = HSV(0x00FFFF);  // Red
+        global_saved_values.layer_colors[7] = HSV(0x00FFFF);  // Red
+        global_saved_values.layer_colors[8] = HSV(0xEAFFFF);  // Pink
+        global_saved_values.layer_colors[9] = HSV(0xBFFF80);  // Purple
         global_saved_values.layer_colors[10] = HSV(0x0BB0FF); // Coral
         global_saved_values.layer_colors[11] = HSV(0x6AFFFF); // Spring Green
         global_saved_values.layer_colors[12] = HSV(0x80FF80); // Teal
         global_saved_values.layer_colors[13] = HSV(0x80FFFF); // Turquoise
         global_saved_values.layer_colors[14] = HSV(0x2BFFFF); // Yellow
         global_saved_values.layer_colors[15] = HSV(0xD5FFFF); // Magenta
-        modified = true;
-    }
-    if (global_saved_values.version < 4) {
-        global_saved_values.version = 4;
-        global_saved_values.auto_mouse = true;
-        modified = true;
-    }
-    if (global_saved_values.version < 5) {
-        global_saved_values.version = 5;
-        global_saved_values.axis_scroll_lock = true;
-        modified = true;
-    }
-    if (global_saved_values.version < 6) {
-        global_saved_values.version = 6;
-        global_saved_values.turbo_scan = 0;
-    }
-    if (global_saved_values.version < 7) {
-        global_saved_values.version = 7;
-        global_saved_values.natural_scroll = false;
-    }
 
-    // As we add versions, just append here.
-    if (modified) {
         write_eeprom_kb();
         svalboard_eeprom_set_valid();
+    } else {
+        via_read_custom_config(&global_saved_values, SVALBOARD_VIA_CONFIG_OFFSET, SVALBOARD_VIA_CONFIG_SIZE);
     }
     sval_active_layer = 0;
 }
@@ -317,11 +290,11 @@ enum sval_via_value_id {
     id_right_scroll = 3,
     id_automouse_enable = 4,
     id_automouse_timeout = 5,
-    id_automouse_threshold = 6,  // reserved, not implemented
+    id_automouse_threshold = 6,
     id_natural_scroll = 7,
     id_axis_lock = 8,
     id_turbo_scan = 9,
-    // 10-15 reserved
+    id_automouse_decay = 10,  // Accumulator decay time in 10ms units
     id_tapping_term = 16,
     id_permissive_hold = 17,
     id_hold_on_other_key = 18,
@@ -378,6 +351,12 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
                         global_saved_values.turbo_scan = value_data[0];
                     }
                     break;
+                case id_automouse_threshold:
+                    global_saved_values.automouse_threshold = value_data[0] | (value_data[1] << 8);
+                    break;
+                case id_automouse_decay:
+                    global_saved_values.automouse_decay = value_data[0];
+                    break;
                 default:
                     // Layer colors: id 32-47
                     if (*value_id >= id_layer0_color && *value_id < id_layer0_color + 16) {
@@ -422,6 +401,13 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
                     break;
                 case id_turbo_scan:
                     value_data[0] = global_saved_values.turbo_scan;
+                    break;
+                case id_automouse_threshold:
+                    value_data[0] = global_saved_values.automouse_threshold & 0xFF;
+                    value_data[1] = (global_saved_values.automouse_threshold >> 8) & 0xFF;
+                    break;
+                case id_automouse_decay:
+                    value_data[0] = global_saved_values.automouse_decay;
                     break;
                 case id_current_layer:
                     value_data[0] = sval_active_layer;
