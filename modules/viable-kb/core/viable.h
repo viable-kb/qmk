@@ -8,6 +8,12 @@
 #include "action.h"
 #include "viable_qmk_settings.h"
 
+// Include generated config (defines VIABLE_*_ENTRIES and VIABLE_*_ENABLE)
+// This is generated from viable.json by viable_config.py
+#if __has_include("viable_config.h")
+#    include "viable_config.h"
+#endif
+
 // Viable protocol version
 #define VIABLE_PROTOCOL_VERSION 0x00000001
 
@@ -50,6 +56,9 @@ enum viable_command_id {
     viable_cmd_qmk_settings_get   = 0x11,
     viable_cmd_qmk_settings_set   = 0x12,
     viable_cmd_qmk_settings_reset = 0x13,
+    // Leader commands
+    viable_cmd_leader_get        = 0x14,
+    viable_cmd_leader_set        = 0x15,
     viable_cmd_error             = 0xFF,
 };
 
@@ -58,27 +67,33 @@ enum viable_feature_flags {
     viable_flag_caps_word   = (1 << 0),
     viable_flag_layer_lock  = (1 << 1),
     viable_flag_oneshot     = (1 << 2),
-    // bits 3-7 reserved
+    viable_flag_leader      = (1 << 3),
+    // bits 4-7 reserved
 };
 
 // Keyboard definition chunk size (fits in 32-byte HID packet with header)
 #define VIABLE_DEFINITION_CHUNK_SIZE 28
 
-// Entry counts - default values, can be overridden
+// Entry counts - set by viable_config.h from viable.json
+// Features not in viable.json get 0 entries (disabled)
 #ifndef VIABLE_TAP_DANCE_ENTRIES
-#    define VIABLE_TAP_DANCE_ENTRIES 16
+#    define VIABLE_TAP_DANCE_ENTRIES 0
 #endif
 
 #ifndef VIABLE_COMBO_ENTRIES
-#    define VIABLE_COMBO_ENTRIES 16
+#    define VIABLE_COMBO_ENTRIES 0
 #endif
 
 #ifndef VIABLE_KEY_OVERRIDE_ENTRIES
-#    define VIABLE_KEY_OVERRIDE_ENTRIES 16
+#    define VIABLE_KEY_OVERRIDE_ENTRIES 0
 #endif
 
 #ifndef VIABLE_ALT_REPEAT_KEY_ENTRIES
-#    define VIABLE_ALT_REPEAT_KEY_ENTRIES 16
+#    define VIABLE_ALT_REPEAT_KEY_ENTRIES 0
+#endif
+
+#ifndef VIABLE_LEADER_ENTRIES
+#    define VIABLE_LEADER_ENTRIES 0
 #endif
 
 // Tap Dance entry structure (10 bytes)
@@ -152,6 +167,21 @@ typedef struct __attribute__((packed)) {
 } viable_one_shot_t;
 _Static_assert(sizeof(viable_one_shot_t) == 3, "viable_one_shot_t must be 3 bytes");
 
+// Leader entry structure (14 bytes)
+// Enabled when options bit 15 = 1
+typedef struct __attribute__((packed)) {
+    uint16_t sequence[5];  // Up to 5 keys in order (0x0000 = unused/end)
+    uint16_t output;       // Output keycode
+    uint16_t options;      // bit 15 = enabled, bits 0-14 = reserved
+} viable_leader_entry_t;
+_Static_assert(sizeof(viable_leader_entry_t) == 14, "viable_leader_entry_t must be 14 bytes");
+
+// Leader option bits
+enum viable_leader_options {
+    viable_leader_enabled = (1 << 15),
+    // bits 0-14 reserved
+};
+
 // EEPROM layout constants - shared across all viable modules
 #define VIABLE_TAP_DANCE_OFFSET      0
 #define VIABLE_TAP_DANCE_SIZE        (VIABLE_TAP_DANCE_ENTRIES * sizeof(viable_tap_dance_entry_t))
@@ -168,13 +198,16 @@ _Static_assert(sizeof(viable_one_shot_t) == 3, "viable_one_shot_t must be 3 byte
 #define VIABLE_ONE_SHOT_OFFSET       (VIABLE_ALT_REPEAT_KEY_OFFSET + VIABLE_ALT_REPEAT_KEY_SIZE)
 #define VIABLE_ONE_SHOT_SIZE         sizeof(viable_one_shot_t)
 
+#define VIABLE_LEADER_OFFSET         (VIABLE_ONE_SHOT_OFFSET + VIABLE_ONE_SHOT_SIZE)
+#define VIABLE_LEADER_SIZE           (VIABLE_LEADER_ENTRIES * sizeof(viable_leader_entry_t))
+
 #define VIABLE_MAGIC_SIZE            6
-#define VIABLE_MAGIC_OFFSET          (VIABLE_ONE_SHOT_OFFSET + VIABLE_ONE_SHOT_SIZE)
+#define VIABLE_MAGIC_OFFSET          (VIABLE_LEADER_OFFSET + VIABLE_LEADER_SIZE)
 
 #define VIABLE_QMK_SETTINGS_OFFSET   (VIABLE_MAGIC_OFFSET + VIABLE_MAGIC_SIZE)
 
 // Total EEPROM size (excluding qmk_settings which has its own size constant)
-#define VIABLE_EEPROM_SIZE           (VIABLE_TAP_DANCE_SIZE + VIABLE_COMBO_SIZE + VIABLE_KEY_OVERRIDE_SIZE + VIABLE_ALT_REPEAT_KEY_SIZE + VIABLE_ONE_SHOT_SIZE)
+#define VIABLE_EEPROM_SIZE           (VIABLE_TAP_DANCE_SIZE + VIABLE_COMBO_SIZE + VIABLE_KEY_OVERRIDE_SIZE + VIABLE_ALT_REPEAT_KEY_SIZE + VIABLE_ONE_SHOT_SIZE + VIABLE_LEADER_SIZE)
 
 // Public API
 void viable_init(void);
@@ -203,6 +236,10 @@ int viable_set_alt_repeat_key(uint8_t index, const viable_alt_repeat_key_entry_t
 void viable_get_one_shot(viable_one_shot_t *settings);
 void viable_set_one_shot(const viable_one_shot_t *settings);
 
+// Storage API - Leader
+int viable_get_leader(uint8_t index, viable_leader_entry_t *entry);
+int viable_set_leader(uint8_t index, const viable_leader_entry_t *entry);
+
 // Administrative functions
 void viable_save(void);
 void viable_reset(void);
@@ -215,6 +252,7 @@ void viable_reload_tap_dance(void);
 void viable_reload_combo(void);
 void viable_reload_key_override(void);
 void viable_reload_alt_repeat_key(void);
+void viable_reload_leader(void);
 
 // Keycode execution helpers
 void viable_keycode_down(uint16_t keycode);

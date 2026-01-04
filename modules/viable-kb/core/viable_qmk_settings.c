@@ -39,8 +39,11 @@ typedef struct __attribute__((packed)) {
     uint8_t  unused;
     uint16_t quick_tap_term;
     uint16_t flow_tap_term;
+    uint16_t leader_timeout;
+    uint8_t  leader_options;  // bit 0 = per-key timing
+    uint8_t  unused2;
 } viable_qmk_settings_t;
-_Static_assert(sizeof(viable_qmk_settings_t) == 40, "viable_qmk_settings_t must be 40 bytes");
+_Static_assert(sizeof(viable_qmk_settings_t) == 44, "viable_qmk_settings_t must be 44 bytes");
 
 // RAM copy of settings
 static viable_qmk_settings_t settings;
@@ -79,6 +82,8 @@ enum viable_qsid {
     QSID_QUICK_TAP_TERM = 25,
     QSID_CHORDAL_HOLD = 26,
     QSID_FLOW_TAP_TERM = 27,
+    QSID_LEADER_TIMEOUT = 28,
+    QSID_LEADER_PER_KEY_TIMING = 29,
 };
 
 // tapping_v2 bit positions
@@ -86,6 +91,9 @@ enum viable_qsid {
 #define TAPPING_HOLD_ON_OTHER_KEY_BIT 1
 #define TAPPING_RETRO_TAPPING_BIT 2
 #define TAPPING_CHORDAL_HOLD_BIT 3
+
+// leader_options bit positions
+#define LEADER_PER_KEY_TIMING_BIT 0
 
 // Setting descriptor
 typedef struct {
@@ -126,6 +134,10 @@ static const viable_setting_desc_t setting_descs[] = {
     { QSID_QUICK_TAP_TERM, 2, offsetof(viable_qmk_settings_t, quick_tap_term), 0 },
     { QSID_CHORDAL_HOLD, 1, offsetof(viable_qmk_settings_t, tapping_v2), TAPPING_CHORDAL_HOLD_BIT },
     { QSID_FLOW_TAP_TERM, 2, offsetof(viable_qmk_settings_t, flow_tap_term), 0 },
+#ifdef LEADER_ENABLE
+    { QSID_LEADER_TIMEOUT, 2, offsetof(viable_qmk_settings_t, leader_timeout), 0 },
+    { QSID_LEADER_PER_KEY_TIMING, 1, offsetof(viable_qmk_settings_t, leader_options), LEADER_PER_KEY_TIMING_BIT },
+#endif
 };
 
 #define NUM_SETTINGS (sizeof(setting_descs) / sizeof(setting_descs[0]))
@@ -170,6 +182,11 @@ static void viable_qmk_settings_apply(void) {
     mk_wheel_max_speed = settings.mousekey_wheel_max_speed;
     mk_wheel_time_to_max = settings.mousekey_wheel_time_to_max;
 #endif
+
+#ifdef LEADER_ENABLE
+    extern uint16_t viable_leader_timeout;
+    viable_leader_timeout = settings.leader_timeout;
+#endif
 }
 
 // Query supported QSIDs greater than qsid_gt
@@ -180,7 +197,8 @@ void viable_qmk_settings_query(uint16_t qsid_gt, uint8_t *buffer, uint8_t length
     size_t buf_offset = 0;
     for (size_t i = 0; i < NUM_SETTINGS; i++) {
         if (setting_descs[i].qsid > qsid_gt) {
-            if (buf_offset + 2 > length) break;
+            // Reserve 2 bytes for 0xFFFF terminator
+            if (buf_offset + 4 > length) break;
             buffer[buf_offset++] = setting_descs[i].qsid & 0xFF;
             buffer[buf_offset++] = (setting_descs[i].qsid >> 8) & 0xFF;
         }
@@ -211,8 +229,9 @@ int viable_qmk_settings_get(uint16_t qsid, uint8_t *buffer, uint8_t length) {
     const viable_setting_desc_t *desc = find_setting(qsid);
     if (!desc) return -1;
 
-    // Bit field settings (QSID 22-26)
-    if (qsid >= QSID_PERMISSIVE_HOLD && qsid <= QSID_CHORDAL_HOLD && qsid != QSID_QUICK_TAP_TERM) {
+    // Bit field settings (QSID 22-26 and 29)
+    if ((qsid >= QSID_PERMISSIVE_HOLD && qsid <= QSID_CHORDAL_HOLD && qsid != QSID_QUICK_TAP_TERM) ||
+        qsid == QSID_LEADER_PER_KEY_TIMING) {
         if (length < 1) return -1;
         uint8_t *field = ((uint8_t*)&settings) + desc->offset;
         buffer[0] = (*field >> desc->bit) & 1;
@@ -255,7 +274,8 @@ int viable_qmk_settings_set(uint16_t qsid, const uint8_t *data, uint8_t length) 
     if (!desc) return -1;
 
     // Bit field settings
-    if (qsid >= QSID_PERMISSIVE_HOLD && qsid <= QSID_CHORDAL_HOLD && qsid != QSID_QUICK_TAP_TERM) {
+    if ((qsid >= QSID_PERMISSIVE_HOLD && qsid <= QSID_CHORDAL_HOLD && qsid != QSID_QUICK_TAP_TERM) ||
+        qsid == QSID_LEADER_PER_KEY_TIMING) {
         if (length < 1) return -1;
         uint8_t *field = ((uint8_t*)&settings) + desc->offset;
         if (data[0]) {
@@ -349,6 +369,18 @@ void viable_qmk_settings_reset(void) {
     settings.mousekey_wheel_time_to_max = MOUSEKEY_WHEEL_TIME_TO_MAX;
 #endif
 
+#ifdef LEADER_ENABLE
+#   ifdef LEADER_TIMEOUT
+    settings.leader_timeout = LEADER_TIMEOUT;
+#   else
+    settings.leader_timeout = 300;  // QMK default
+#   endif
+    settings.leader_options = 0;
+#   if defined(LEADER_PER_KEY_TIMING) && LEADER_PER_KEY_TIMING
+    settings.leader_options |= (1 << LEADER_PER_KEY_TIMING_BIT);
+#   endif
+#endif
+
     viable_qmk_settings_save();
     viable_qmk_settings_apply();
 
@@ -421,4 +453,12 @@ uint16_t viable_get_tapping_term(void) {
 
 uint16_t viable_get_combo_term(void) {
     return settings.combo_term;
+}
+
+uint16_t viable_get_leader_timeout(void) {
+    return settings.leader_timeout;
+}
+
+bool viable_get_leader_per_key_timing(void) {
+    return settings.leader_options & (1 << LEADER_PER_KEY_TIMING_BIT);
 }

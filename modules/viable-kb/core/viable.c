@@ -73,6 +73,7 @@ void viable_init(void) {
     viable_reload_combo();
     viable_reload_key_override();
     viable_reload_alt_repeat_key();
+    viable_reload_leader();
     viable_qmk_settings_init();
 }
 
@@ -104,6 +105,9 @@ uint8_t viable_get_feature_flags(void) {
 #endif
 #ifdef ONESHOT_ENABLE
     flags |= viable_flag_oneshot;
+#endif
+#ifdef LEADER_ENABLE
+    flags |= viable_flag_leader;
 #endif
     return flags;
 }
@@ -177,6 +181,21 @@ void viable_set_one_shot(const viable_one_shot_t *settings) {
     viable_write_eeprom(VIABLE_ONE_SHOT_OFFSET, settings, sizeof(viable_one_shot_t));
 }
 
+// Storage functions - Leader
+int viable_get_leader(uint8_t index, viable_leader_entry_t *entry) {
+    if (index >= VIABLE_LEADER_ENTRIES) return -1;
+    viable_read_eeprom(VIABLE_LEADER_OFFSET + index * sizeof(viable_leader_entry_t),
+                       entry, sizeof(viable_leader_entry_t));
+    return 0;
+}
+
+int viable_set_leader(uint8_t index, const viable_leader_entry_t *entry) {
+    if (index >= VIABLE_LEADER_ENTRIES) return -1;
+    viable_write_eeprom(VIABLE_LEADER_OFFSET + index * sizeof(viable_leader_entry_t),
+                        entry, sizeof(viable_leader_entry_t));
+    return 0;
+}
+
 void viable_save(void) {
     // Data is written directly to EEPROM, nothing additional to flush
 }
@@ -198,6 +217,7 @@ void viable_reset(void) {
     viable_reload_combo();
     viable_reload_key_override();
     viable_reload_alt_repeat_key();
+    viable_reload_leader();
 }
 
 // Keycode execution helpers
@@ -248,18 +268,15 @@ bool viable_handle_command(uint8_t *data, uint8_t length) {
 
     switch (command_id) {
         case viable_cmd_get_info: {
-            // Response: [0xDF] [0x00] [ver0-3] [td_count] [combo_count] [ko_count] [ark_count] [flags] [uid0-7]
+            // Response: [0xDF] [0x00] [ver0-3] [uid0-7] [flags]
+            // Entry counts are now in viable.json (parsed from keyboard definition)
             uint8_t uid[] = VIABLE_KEYBOARD_UID;
             data[2] = VIABLE_PROTOCOL_VERSION & 0xFF;
             data[3] = (VIABLE_PROTOCOL_VERSION >> 8) & 0xFF;
             data[4] = (VIABLE_PROTOCOL_VERSION >> 16) & 0xFF;
             data[5] = (VIABLE_PROTOCOL_VERSION >> 24) & 0xFF;
-            data[6] = VIABLE_TAP_DANCE_ENTRIES;
-            data[7] = VIABLE_COMBO_ENTRIES;
-            data[8] = VIABLE_KEY_OVERRIDE_ENTRIES;
-            data[9] = VIABLE_ALT_REPEAT_KEY_ENTRIES;
-            data[10] = viable_get_feature_flags();
-            memcpy(&data[11], uid, 8);
+            memcpy(&data[6], uid, 8);
+            data[14] = viable_get_feature_flags();
             break;
         }
 
@@ -437,6 +454,27 @@ bool viable_handle_command(uint8_t *data, uint8_t length) {
             // Request: [0xDF] [0x13]
             // Response: [0xDF] [0x13]
             viable_qmk_settings_reset();
+            break;
+        }
+
+        case viable_cmd_leader_get: {
+            // Request: [0xDF] [0x14] [index]
+            // Response: [0xDF] [0x14] [index] [14 bytes entry]
+            uint8_t idx = data[2];
+            viable_leader_entry_t entry = {0};
+            viable_get_leader(idx, &entry);
+            memcpy(&data[3], &entry, sizeof(entry));
+            break;
+        }
+
+        case viable_cmd_leader_set: {
+            // Request: [0xDF] [0x15] [index] [14 bytes entry]
+            // Response: [0xDF] [0x15] [status]
+            uint8_t idx = data[2];
+            viable_leader_entry_t entry;
+            memcpy(&entry, &data[3], sizeof(entry));
+            data[2] = viable_set_leader(idx, &entry) == 0 ? 0 : 1;
+            viable_reload_leader();
             break;
         }
 

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Initialize QMK settings (load from EEPROM and apply)
 void viable_qmk_settings_init(void);
@@ -23,3 +24,5 @@ void viable_qmk_settings_reset(void);
 // Getters for global settings (used by other viable modules as fallback)
 uint16_t viable_get_tapping_term(void);
 uint16_t viable_get_combo_term(void);
+uint16_t viable_get_leader_timeout(void);
+bool viable_get_leader_per_key_timing(void);

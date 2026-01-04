@@ -63,10 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_TIMEOUT 500 // Timeout window in ms in which the double tap can occur.
 
-// Viable dynamic feature entry counts
-#define VIABLE_TAP_DANCE_ENTRIES 50
-#define VIABLE_COMBO_ENTRIES 50
-#define VIABLE_KEY_OVERRIDE_ENTRIES 30
+// Macro count (Viable entry counts are now in each keymap's viable.json)
 #define DYNAMIC_KEYMAP_MACRO_COUNT 50
 
 // Viable defaults for Svalboard - sane mod-tap experience
