@@ -56,8 +56,8 @@ Control how many entries are available for each dynamic feature. More entries us
 // Key override entries (default: 16, each uses 12 bytes)
 #define VIABLE_KEY_OVERRIDE_ENTRIES 30
 
-// Alt repeat key entries (default: 16, each uses 6 bytes)
-#define VIABLE_ALT_REPEAT_KEY_ENTRIES 16
+// Alt repeat key entries (default: 32, each uses 6 bytes)
+#define VIABLE_ALT_REPEAT_KEY_ENTRIES 32
 ```
 
 ### Default Settings

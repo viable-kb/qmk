@@ -10,7 +10,7 @@
         "tap_dance": 50,
         "combo": 50,
         "key_override": 30,
-        "alt_repeat_key": 16,
+        "alt_repeat_key": 32,
         "leader": 32
     },
     "customKeycodes": [

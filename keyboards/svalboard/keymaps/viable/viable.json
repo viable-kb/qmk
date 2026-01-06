@@ -10,7 +10,7 @@
         "tap_dance": 50,
         "combo": 50,
         "key_override": 30,
-        "alt_repeat_key": 16,
+        "alt_repeat_key": 32,
         "leader": 32
     },
     "customKeycodes": [
@@ -220,22 +220,22 @@
         {
             "label": "Layer Colors",
             "content": [
-                {"label": "Layer 0", "type": "color", "content": ["id_layer0_color", 0, 32]},
-                {"label": "Layer 1", "type": "color", "content": ["id_layer1_color", 0, 33]},
-                {"label": "Layer 2", "type": "color", "content": ["id_layer2_color", 0, 34]},
-                {"label": "Layer 3", "type": "color", "content": ["id_layer3_color", 0, 35]},
-                {"label": "Layer 4", "type": "color", "content": ["id_layer4_color", 0, 36]},
-                {"label": "Layer 5", "type": "color", "content": ["id_layer5_color", 0, 37]},
-                {"label": "Layer 6", "type": "color", "content": ["id_layer6_color", 0, 38]},
-                {"label": "Layer 7", "type": "color", "content": ["id_layer7_color", 0, 39]},
-                {"label": "Layer 8", "type": "color", "content": ["id_layer8_color", 0, 40]},
-                {"label": "Layer 9", "type": "color", "content": ["id_layer9_color", 0, 41]},
-                {"label": "Layer 10", "type": "color", "content": ["id_layer10_color", 0, 42]},
-                {"label": "Layer 11", "type": "color", "content": ["id_layer11_color", 0, 43]},
-                {"label": "Layer 12", "type": "color", "content": ["id_layer12_color", 0, 44]},
-                {"label": "Layer 13", "type": "color", "content": ["id_layer13_color", 0, 45]},
-                {"label": "Layer 14", "type": "color", "content": ["id_layer14_color", 0, 46]},
-                {"label": "Layer 15", "type": "color", "content": ["id_layer15_color", 0, 47]}
+                {"label": "0", "type": "color", "content": ["id_layer0_color", 0, 32]},
+                {"label": "1", "type": "color", "content": ["id_layer1_color", 0, 33]},
+                {"label": "2", "type": "color", "content": ["id_layer2_color", 0, 34]},
+                {"label": "3", "type": "color", "content": ["id_layer3_color", 0, 35]},
+                {"label": "4", "type": "color", "content": ["id_layer4_color", 0, 36]},
+                {"label": "5", "type": "color", "content": ["id_layer5_color", 0, 37]},
+                {"label": "6", "type": "color", "content": ["id_layer6_color", 0, 38]},
+                {"label": "7", "type": "color", "content": ["id_layer7_color", 0, 39]},
+                {"label": "8", "type": "color", "content": ["id_layer8_color", 0, 40]},
+                {"label": "9", "type": "color", "content": ["id_layer9_color", 0, 41]},
+                {"label": "10", "type": "color", "content": ["id_layer10_color", 0, 42]},
+                {"label": "11", "type": "color", "content": ["id_layer11_color", 0, 43]},
+                {"label": "12", "type": "color", "content": ["id_layer12_color", 0, 44]},
+                {"label": "13", "type": "color", "content": ["id_layer13_color", 0, 45]},
+                {"label": "14", "type": "color", "content": ["id_layer14_color", 0, 46]},
+                {"label": "15", "type": "color", "content": ["id_layer15_color", 0, 47]}
             ]
         }
     ],
