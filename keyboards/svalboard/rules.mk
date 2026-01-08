@@ -17,6 +17,9 @@ SERIAL_DRIVER = vendor
 POINTING_DEVICE_ENABLE = yes
 POINTING_DEVICE_DRIVER = custom
 
+# Use shared endpoint for proper hires scroll feature report handling
+MOUSE_SHARED_EP = yes
+
 REPEAT_KEY_ENABLE = yes
 LAYER_LOCK_ENABLE = yes
 
