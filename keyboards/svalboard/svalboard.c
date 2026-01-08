@@ -1,9 +1,18 @@
 #include "svalboard.h"
+#if VIA_ENABLE
 #include "via.h"
+#endif
 #include "version.h"
 #include "split_common/transactions.h"
 #include <string.h>
 #include QMK_KEYBOARD_H
+#include "usb_main.h"
+#include "suspend.h"
+
+// USB remote wakeup status bit (from USB spec, not exported by QMK headers)
+#ifndef USB_GETSTATUS_REMOTE_WAKEUP_ENABLED
+#define USB_GETSTATUS_REMOTE_WAKEUP_ENABLED (2U)
+#endif
 
 saved_values_t global_saved_values;
 const int16_t mh_timer_choices[6] = { 200, 300, 400, 500, 800, -1 }; // -1 is infinite.
@@ -20,6 +29,7 @@ uint8_t sval_active_layer = 0;
 #define SVALBOARD_MAGIC_SIZE 6
 #define SVALBOARD_MAGIC_OFFSET (SVALBOARD_VIA_CONFIG_OFFSET + SVALBOARD_VIA_CONFIG_SIZE)
 
+#if VIA_ENABLE
 static void svalboard_get_magic(uint8_t *magic) {
     char *p = QMK_BUILDDATE;
     magic[0] = ((p[2] & 0x0F) << 4) | (p[3] & 0x0F);  // year low 2 digits
@@ -47,6 +57,11 @@ static void svalboard_eeprom_set_valid(void) {
 void write_eeprom_kb(void) {
     via_update_custom_config(&global_saved_values, SVALBOARD_VIA_CONFIG_OFFSET, SVALBOARD_VIA_CONFIG_SIZE);
 }
+#else
+static bool svalboard_eeprom_is_valid(void) { return true; }
+static void svalboard_eeprom_set_valid(void) {}
+void write_eeprom_kb(void) {}
+#endif
 
 #define HSV(c) (struct layer_hsv) { (c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF}
 
@@ -88,7 +103,9 @@ void read_eeprom_kb(void) {
         write_eeprom_kb();
         svalboard_eeprom_set_valid();
     } else {
+#if VIA_ENABLE
         via_read_custom_config(&global_saved_values, SVALBOARD_VIA_CONFIG_OFFSET, SVALBOARD_VIA_CONFIG_SIZE);
+#endif
     }
     sval_active_layer = 0;
 }
@@ -222,7 +239,30 @@ void keyboard_post_init_kb(void) {
 
 static bool is_connected = false;
 
+// Custom USB wake handler for split keyboards with NO_USB_STARTUP_CHECK
+// This replaces the wake functionality that NO_USB_STARTUP_CHECK disables
+static void sval_usb_wake_handler(void) {
+    // Only master half handles USB wake
+    if (!is_keyboard_master()) return;
+
+    // Check if USB is in suspended state
+    if (USB_DRIVER.state == USB_SUSPENDED) {
+        // Check if host has enabled remote wakeup capability
+        if (USB_DRIVER.status & USB_GETSTATUS_REMOTE_WAKEUP_ENABLED) {
+            // Check for wake condition (key pressed)
+            if (suspend_wakeup_condition()) {
+                usbWakeupHost(&USB_DRIVER);
+#if USB_SUSPEND_WAKEUP_DELAY > 0
+                wait_ms(USB_SUSPEND_WAKEUP_DELAY);
+#endif
+            }
+        }
+    }
+}
+
 void housekeeping_task_kb(void) {
+    sval_usb_wake_handler();
+
     if (is_keyboard_master()) {
         static uint32_t last_ping = 0;
         if (timer_elapsed(last_ping) > 500) {
@@ -282,6 +322,7 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             '*', '*', '*', '*', '*', '*'
           );
 
+#if VIA_ENABLE
 // VIA custom keyboard value IDs (channel 1)
 enum sval_via_value_id {
     id_left_dpi = 0,
@@ -424,3 +465,4 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
             break;
     }
 }
+#endif // VIA_ENABLE
