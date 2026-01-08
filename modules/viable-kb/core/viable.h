@@ -59,6 +59,9 @@ enum viable_command_id {
     // Leader commands
     viable_cmd_leader_get        = 0x14,
     viable_cmd_leader_set        = 0x15,
+    // Layer state commands (32-bit layer mask)
+    viable_cmd_layer_state_get   = 0x16,
+    viable_cmd_layer_state_set   = 0x17,
     viable_cmd_error             = 0xFF,
 };
 

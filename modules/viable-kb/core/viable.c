@@ -480,6 +480,28 @@ bool viable_handle_command(uint8_t *data, uint8_t length) {
             break;
         }
 
+        case viable_cmd_layer_state_get: {
+            // Request: [0xDF] [0x16]
+            // Response: [0xDF] [0x16] [state0] [state1] [state2] [state3]
+            uint32_t state = layer_state;
+            data[2] = state & 0xFF;
+            data[3] = (state >> 8) & 0xFF;
+            data[4] = (state >> 16) & 0xFF;
+            data[5] = (state >> 24) & 0xFF;
+            break;
+        }
+
+        case viable_cmd_layer_state_set: {
+            // Request: [0xDF] [0x17] [state0] [state1] [state2] [state3]
+            // Response: [0xDF] [0x17]
+            uint32_t new_state = data[2] |
+                                (data[3] << 8) |
+                                (data[4] << 16) |
+                                (data[5] << 24);
+            layer_state_set(new_state);
+            break;
+        }
+
         default:
             // Unknown command - set error response
             data[1] = viable_cmd_error;

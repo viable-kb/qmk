@@ -302,7 +302,6 @@ enum sval_via_value_id {
     // 20-31 reserved
     id_layer0_color = 32,
     // 32-47 are layer colors (id_layer0_color + layer)
-    id_current_layer = 48,
 };
 
 void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
@@ -408,9 +407,6 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t length) {
                     break;
                 case id_automouse_decay:
                     value_data[0] = global_saved_values.automouse_decay;
-                    break;
-                case id_current_layer:
-                    value_data[0] = sval_active_layer;
                     break;
                 default:
                     // Layer colors: id 32-47
