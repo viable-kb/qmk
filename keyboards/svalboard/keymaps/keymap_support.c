@@ -228,6 +228,27 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
     bool has_scroll_input = (left_scrolling && (reportMouse1.x != 0 || reportMouse1.y != 0)) ||
                             (right_scrolling && (reportMouse2.x != 0 || reportMouse2.y != 0));
 
+    // Accumulate movement for threshold check BEFORE scroll conversion (normalized to 800 DPI reference)
+    // Use only the greater of left/right to prevent both sides shaking from triggering
+    int32_t left_movement = abs(reportMouse1.x) + abs(reportMouse1.y);
+    int32_t right_movement = abs(reportMouse2.x) + abs(reportMouse2.y);
+    int32_t left_normalized = (left_movement > 0) ? (left_movement * 800) / get_left_dpi() : 0;
+    int32_t right_normalized = (right_movement > 0) ? (right_movement * 800) / get_right_dpi() : 0;
+    int32_t normalized_movement = (left_normalized > right_normalized) ? left_normalized : right_normalized;
+    if (normalized_movement > 0) {
+        uint16_t decay_ms = global_saved_values.automouse_decay * 10;
+        if (decay_ms > 0 && timer_elapsed(automouse_accumulator_timer) > decay_ms) {
+            automouse_accumulator = 0;
+        }
+        automouse_accumulator_timer = timer_read();
+        automouse_accumulator += normalized_movement;
+
+        if (global_saved_values.automouse_threshold == 0 ||
+            automouse_accumulator >= global_saved_values.automouse_threshold) {
+            mouse_mode(true);
+        }
+    }
+
     if (left_scrolling) {
         reportMouse1.h = add_to_axis(&l_x, reportMouse1.x);
         reportMouse1.v = add_to_axis(&l_y, -reportMouse1.y);
@@ -281,30 +302,6 @@ report_mouse_t pointing_device_task_combined_user(report_mouse_t reportMouse1, r
         scroll_accumulator_v = 0;
 	m_scroll_accumulator_h = 0;
 	m_scroll_accumulator_v = 0;
-    }
-
-    // Accumulate movement for threshold check (normalized to 800 DPI reference)
-    int32_t left_movement = abs(reportMouse1.x) + abs(reportMouse1.y);
-    int32_t right_movement = abs(reportMouse2.x) + abs(reportMouse2.y);
-    int32_t normalized_movement = 0;
-    if (left_movement > 0) {
-        normalized_movement += (left_movement * 800) / get_left_dpi();
-    }
-    if (right_movement > 0) {
-        normalized_movement += (right_movement * 800) / get_right_dpi();
-    }
-    if (normalized_movement > 0) {
-        uint16_t decay_ms = global_saved_values.automouse_decay * 10;
-        if (decay_ms > 0 && timer_elapsed(automouse_accumulator_timer) > decay_ms) {
-            automouse_accumulator = 0;
-        }
-        automouse_accumulator_timer = timer_read();
-        automouse_accumulator += normalized_movement;
-
-        if (global_saved_values.automouse_threshold == 0 ||
-            automouse_accumulator >= global_saved_values.automouse_threshold) {
-            mouse_mode(true);
-        }
     }
 
     ret_mouse = pointing_device_combine_reports(reportMouse1, reportMouse2);
