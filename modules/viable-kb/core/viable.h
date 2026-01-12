@@ -62,6 +62,10 @@ enum viable_command_id {
     // Layer state commands (32-bit layer mask)
     viable_cmd_layer_state_get   = 0x16,
     viable_cmd_layer_state_set   = 0x17,
+    // Fragment commands (hardware detection and EEPROM selection)
+    viable_cmd_fragment_get_hardware   = 0x18,
+    viable_cmd_fragment_get_selections = 0x19,
+    viable_cmd_fragment_set_selections = 0x1A,
     viable_cmd_error             = 0xFF,
 };
 
@@ -98,6 +102,12 @@ enum viable_feature_flags {
 #ifndef VIABLE_LEADER_ENTRIES
 #    define VIABLE_LEADER_ENTRIES 0
 #endif
+
+// Maximum fragment instances (fixed-size protocol buffer)
+#define VIABLE_FRAGMENT_MAX_INSTANCES 21
+
+// Fragment ID indicating no detection or no selection
+#define VIABLE_FRAGMENT_ID_NONE 0xFF
 
 // Tap Dance entry structure (10 bytes)
 // Enabled when custom_tapping_term bit 15 = 1
@@ -208,9 +218,13 @@ enum viable_leader_options {
 #define VIABLE_MAGIC_OFFSET          (VIABLE_LEADER_OFFSET + VIABLE_LEADER_SIZE)
 
 #define VIABLE_QMK_SETTINGS_OFFSET   (VIABLE_MAGIC_OFFSET + VIABLE_MAGIC_SIZE)
+// VIABLE_QMK_SETTINGS_SIZE is defined in post_config.h (44 bytes)
 
-// Total EEPROM size (excluding qmk_settings which has its own size constant)
-#define VIABLE_EEPROM_SIZE           (VIABLE_TAP_DANCE_SIZE + VIABLE_COMBO_SIZE + VIABLE_KEY_OVERRIDE_SIZE + VIABLE_ALT_REPEAT_KEY_SIZE + VIABLE_ONE_SHOT_SIZE + VIABLE_LEADER_SIZE)
+#define VIABLE_FRAGMENT_OFFSET       (VIABLE_QMK_SETTINGS_OFFSET + VIABLE_QMK_SETTINGS_SIZE)
+#define VIABLE_FRAGMENT_SIZE         VIABLE_FRAGMENT_MAX_INSTANCES  // 21 bytes
+
+// Total EEPROM size (all viable storage areas)
+#define VIABLE_EEPROM_SIZE           (VIABLE_FRAGMENT_OFFSET + VIABLE_FRAGMENT_SIZE)
 
 // Public API
 void viable_init(void);
@@ -271,3 +285,25 @@ void keyboard_post_init_core_kb(void);
 
 // Tap dance process_record hook
 bool process_record_viable_tap_dance(uint16_t keycode, keyrecord_t *record);
+
+// Fragment detection and selection functions
+// These are weak - keyboard can override for hardware-specific detection
+
+// Get hardware-detected fragment ID for an instance (weak, default returns 0xFF)
+// Return 0xFF if no detection available for this instance
+uint8_t viable_fragment_detect(uint8_t instance_idx);
+
+// Get number of fragment instances from keyboard definition
+// This is extracted from the JSON at build time
+uint8_t viable_fragment_get_instance_count(void);
+
+// Get EEPROM-stored selection for an instance
+uint8_t viable_fragment_get_selection(uint8_t instance_idx);
+
+// Set EEPROM-stored selection for an instance
+void viable_fragment_set_selection(uint8_t instance_idx, uint8_t fragment_id);
+
+// Protocol handlers for fragment commands
+bool viable_handle_fragment_get_hardware(uint8_t *data, uint8_t length);
+bool viable_handle_fragment_get_selections(uint8_t *data, uint8_t length);
+bool viable_handle_fragment_set_selections(uint8_t *data, uint8_t length);

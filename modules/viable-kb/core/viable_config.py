@@ -8,6 +8,8 @@ Generate viable_config.h from viable.json.
 Reads the 'viable' object from viable.json and generates C #defines
 for each feature's entry count and enable flag.
 
+Also extracts fragment instance count from composition.instances if present.
+
 Features not present in the JSON will not have defines generated,
 allowing code to be excluded via #ifdef at compile time.
 """
@@ -58,6 +60,13 @@ def generate_config(json_path, header_path, mk_path=None):
                     count = viable[json_key]
                     f.write(f"#define VIABLE_{c_name}_ENTRIES {count}\n")
                     f.write(f"#define VIABLE_{c_name}_ENABLE 1\n\n")
+
+        # Extract fragment instance count from composition.instances
+        composition = data.get('composition', {})
+        instances = composition.get('instances', [])
+        if instances:
+            f.write(f"// Fragment composition\n")
+            f.write(f"#define VIABLE_FRAGMENT_INSTANCE_COUNT {len(instances)}\n\n")
 
     # Generate make fragment if requested
     if mk_path:

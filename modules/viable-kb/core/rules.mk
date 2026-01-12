@@ -62,6 +62,7 @@ $(shell python3 "$(VIABLE_MODULE_PATH)viable_compress.py" \
 SRC += $(VIABLE_MODULE_PATH)viable.c
 SRC += $(VIABLE_MODULE_PATH)viable_definition.c
 SRC += $(VIABLE_MODULE_PATH)viable_qmk_settings.c
+SRC += $(VIABLE_MODULE_PATH)viable_fragments.c
 SRC += $(VIABLE_MODULE_PATH)client_wrapper.c
 
 # Conditionally include feature source files based on viable.json config

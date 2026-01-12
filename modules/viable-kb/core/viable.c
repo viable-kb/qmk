@@ -502,6 +502,15 @@ bool viable_handle_command(uint8_t *data, uint8_t length) {
             break;
         }
 
+        case viable_cmd_fragment_get_hardware:
+            return viable_handle_fragment_get_hardware(data, length);
+
+        case viable_cmd_fragment_get_selections:
+            return viable_handle_fragment_get_selections(data, length);
+
+        case viable_cmd_fragment_set_selections:
+            return viable_handle_fragment_set_selections(data, length);
+
         default:
             // Unknown command - set error response
             data[1] = viable_cmd_error;
