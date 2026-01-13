@@ -86,6 +86,24 @@ uint16_t viable_get_reverse_alt_repeat_keycode(uint16_t keycode, uint8_t mods) {
     return KC_NO;
 }
 
+// QMK callback to integrate viable alt repeat entries with QMK's repeat key system
+uint16_t get_alt_repeat_key_keycode_user(uint16_t keycode, uint8_t mods) {
+    // First check viable's dynamically-configured entries
+    uint16_t alt = viable_get_alt_repeat_keycode(keycode, mods);
+    if (alt != KC_NO) {
+        return alt;
+    }
+
+    // Also check reverse mapping for bidirectional entries
+    alt = viable_get_reverse_alt_repeat_keycode(keycode, mods);
+    if (alt != KC_NO) {
+        return alt;
+    }
+
+    // Fall through to QMK's default behavior
+    return KC_TRANSPARENT;
+}
+
 #else
 // Stubs when REPEAT_KEY_ENABLE is not defined
 void viable_reload_alt_repeat_key(void) {}
